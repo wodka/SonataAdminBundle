@@ -75,6 +75,31 @@ class AddDependencyCallsCompilerPass implements CompilerPassInterface
             }
         }
 
+
+        foreach ($container->findTaggedServiceIds('sonata.admin.phpcr') as $id => $tags) {
+            foreach ($tags as $attributes) {
+                $definition = $container->getDefinition($id);
+
+                $arguments = $definition->getArguments();
+
+                if (strlen($arguments[0]) == 0) {
+                    $definition->replaceArgument(0, $id);
+                }
+
+                if (strlen($arguments[2]) == 0) {
+                    $definition->replaceArgument(2, 'SonataAdminBundle:CRUD');
+                }
+
+                $this->applyConfigurationFromAttribute($definition, $attributes);
+                $this->applyDefaults($container, $id, $attributes);
+
+                $arguments = $definition->getArguments();
+
+                $admins[] = $id;
+                $classes[$arguments[1]] = $id;
+            }
+        }
+
         $dashboardGroupsSettings = $container->getParameter('sonata.admin.configuration.dashboard_groups');
         if (!empty($dashboardGroupsSettings)) {
             $groups = $dashboardGroupsSettings;
