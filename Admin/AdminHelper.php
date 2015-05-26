@@ -125,6 +125,8 @@ class AdminHelper
         } elseif ($collection instanceof \Doctrine\ORM\PersistentCollection) {
             //since doctrine 2.4
             $entityClassName = $collection->getTypeClass()->getName();
+        } elseif ($collection instanceof \Doctrine\Common\Collections\Collection) {
+            $entityClassName = $this->entityClassNameFinder($admin, explode('.', preg_replace('#\[\d*?\]#', '', $elementId)));
         } else {
             return;
         }
@@ -143,7 +145,7 @@ class AdminHelper
     {
         $element = array_shift($elements);
 
-        if(!is_object($element)){
+        if(is_object($element)){
             return null;
         }
 
