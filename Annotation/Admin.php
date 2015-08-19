@@ -90,7 +90,7 @@ class Admin implements MetadataProcessorInterface
         $this->generateFallback($this->class);
         $this->validate();
 
-        $tag = [
+        $tag = array(
             'manager_type' => $this->managerType,
             'group' => $this->group,
             'label' => $this->label,
@@ -98,26 +98,26 @@ class Admin implements MetadataProcessorInterface
             'icon' => $this->icon,
             'pager_type' => $this->pagerType,
             'persist_filters' => $this->persistFilters
-        ];
+        );
 
         // remove empty entries
         $tag = array_filter($tag, function($v) { return !is_null($v); });
 
         $metadata->tags['sonata.admin'][] = $tag;
 
-        $metadata->arguments = [
+        $metadata->arguments = array(
             $this->id,
             $this->class,
             $this->baseControllerName,
-        ];
+        );
 
         if ($this->translationDomain) {
-            $metadata->methodCalls[] = [
+            $metadata->methodCalls[] = array(
                 'setTranslationDomain',
-                [
+                array(
                     $this->translationDomain
-                ]
-            ];
+                )
+            );
         }
     }
 

@@ -40,12 +40,12 @@ class AnnotationCompilerPassTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(
             $meta->tags['sonata.admin'][0],
-            [
+            array(
                 'manager_type' => 'orm',
                 'group' => 'Admin',
                 'label' => 'Foo',
                 'show_in_dashboard' => true
-            ]
+            )
         );
     }
 
@@ -71,22 +71,22 @@ class AnnotationCompilerPassTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(
             $meta->tags['sonata.admin'][0],
-            [
+            array(
                 'manager_type' => 'doctrine_mongodb',
                 'group' => 'myGroup',
                 'label' => 'myLabel',
                 'show_in_dashboard' => false
-            ]
+            )
         );
 
         $this->assertEquals(
             $meta->methodCalls[0],
-            [
+            array(
                 'setTranslationDomain',
-                [
+                array(
                     'OMG'
-                ]
-            ]
+                )
+            )
         );
     }
 }
