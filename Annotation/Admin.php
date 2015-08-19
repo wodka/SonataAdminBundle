@@ -4,6 +4,7 @@ namespace Sonata\AdminBundle\Annotation;
 
 use JMS\DiExtraBundle\Annotation\MetadataProcessorInterface;
 use JMS\DiExtraBundle\Metadata\ClassMetadata;
+use Sonata\AdminBundle\Admin\Admin as AdminClass;
 
 /**
  * use annotations to define admin classes.
@@ -100,18 +101,23 @@ class Admin implements MetadataProcessorInterface
         ];
 
         // remove empty entries
-        $tag = array_filter($tag);
+        $tag = array_filter($tag, function($v) { return !is_null($v); });
 
         $metadata->tags['sonata.admin'][] = $tag;
 
-        $metadata->arguments = array(
+        $metadata->arguments = [
             $this->id,
             $this->class,
             $this->baseControllerName,
-        );
+        ];
 
         if ($this->translationDomain) {
-            $metadata->methodCalls[] = array('setTranslationDomain', array($this->translationDomain));
+            $metadata->methodCalls[] = [
+                'setTranslationDomain',
+                [
+                    $this->translationDomain
+                ]
+            ];
         }
     }
 
@@ -141,15 +147,13 @@ class Admin implements MetadataProcessorInterface
             return;
         }
 
-        $regex = '@[A-Za-z0-9]+\\\([A-Za-z0-9]+)Bundle\\\(Document|Entity)\\\([A-Za-z0-9]+)@';
-
-        if (preg_match($regex, $name, $matches)) {
+        if (preg_match(AdminClass::CLASS_REGEX, $name, $matches)) {
             if (empty($this->group)) {
-                $this->group = $matches[1];
+                $this->group = $matches[3];
             }
 
             if (empty($this->label)) {
-                $this->label = $matches[3];
+                $this->label = $matches[5];
             }
         }
     }
