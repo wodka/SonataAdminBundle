@@ -16,6 +16,12 @@
             "homepage": "https://github.com/sonata-project/SonataAdminBundle/contributors"
         }
     ],
+    "repositories":[
+        {
+            "type":											"vcs",
+            "url":											"https://github.com/wodka/JMSDiExtraBundle"
+        }
+    ],
     "require": {
         "symfony/http-foundation": "~2.3",
         "symfony/form": "~2.3",
@@ -46,10 +52,12 @@
         "symfony/yaml": "~2.3",
         "symfony/security-acl": "~2.4",
         "sonata-project/intl-bundle": "~2.1",
-        "symfony/phpunit-bridge": "~2.7|~3.0"
+        "symfony/phpunit-bridge": "~2.7|~3.0",
+        "jms/di-extra-bundle": "dev-metadata-processor"
     },
     "suggest": {
         "jms/translation-bundle": "Extract message keys from Admins",
+        "jms/di-extra-bundle": "Annotations for Admin definition",
         "sensio/generator-bundle": "Add sonata:admin:generate command",
         "sonata-project/intl-bundle": "Add localized date and number into the list",
         "symfony/security-acl": "To make sonata working with Symfony >=2.8"
