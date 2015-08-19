@@ -126,6 +126,10 @@ class Admin implements MetadataProcessorInterface
      */
     private function validate()
     {
+        if (!$this->showInDashboard) {
+            return;
+        }
+
         if (empty($this->group) || empty($this->label)) {
             throw new \RuntimeException(
                 sprintf(

@@ -26,6 +26,31 @@ class AnnotationCompilerPassTest extends \PHPUnit_Framework_TestCase
         $annotation->processMetadata($meta);
     }
 
+    public function testEmbeddedAdmin()
+    {
+        /*
+         * @Admin(
+         *   class="Sonata\Admin\Entity\Tests\Fixtures\Foo",
+         *   showInDashboard=false
+         * )
+         */
+        $annotation = new Admin();
+        $annotation->class = 'Sonata\Admin\Entity\Tests\Fixtures\Foo';
+        $annotation->showInDashboard = false;
+
+        $meta = new ClassMetadata('Sonata\AdminBundle\Tests\Fixtures\Entity\Foo');
+
+        $annotation->processMetadata($meta);
+
+        $this->assertEquals(
+            $meta->tags['sonata.admin'][0],
+            array(
+                'manager_type' => 'orm',
+                'show_in_dashboard' => false
+            )
+        );
+    }
+
     public function testMinimalAdmin()
     {
         /*
@@ -53,8 +78,11 @@ class AnnotationCompilerPassTest extends \PHPUnit_Framework_TestCase
     {
         /*
          * @Admin(
-         *      class="Sonata\AdminBundle\Entity\Foo"
-         *
+         *      class="Sonata\AdminBundle\Entity\Foo",
+         *      managerType="doctrine_mongodb",
+         *      group="myGroup",
+         *      label="myLabel",
+         *      translationDomain="OMG"
          * )
          */
         $annotation = new Admin();
