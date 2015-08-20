@@ -49,6 +49,9 @@
         "symfony/phpunit-bridge": "~2.7|~3.0",
         "jms/di-extra-bundle": "dev-master as 1.6"
     },
+    "confict": {
+        "jms/di-extra-bundle": "<1.6.0"
+    },
     "suggest": {
         "jms/translation-bundle": "Extract message keys from Admins",
         "jms/di-extra-bundle": "Annotations for Admin definition",
