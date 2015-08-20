@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of the Sonata Project package.
+ *
+ * (c) Thomas Rabaix <thomas.rabaix@sonata-project.org>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Sonata\AdminBundle\Tests\DependencyInjection;
 
 use JMS\DiExtraBundle\Metadata\ClassMetadata;
@@ -45,8 +54,8 @@ class AnnotationCompilerPassTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             $meta->tags['sonata.admin'][0],
             array(
-                'manager_type' => 'orm',
-                'show_in_dashboard' => false
+                'manager_type'      => 'orm',
+                'show_in_dashboard' => false,
             )
         );
     }
@@ -66,10 +75,10 @@ class AnnotationCompilerPassTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             $meta->tags['sonata.admin'][0],
             array(
-                'manager_type' => 'orm',
-                'group' => 'Admin',
-                'label' => 'Foo',
-                'show_in_dashboard' => true
+                'manager_type'      => 'orm',
+                'group'             => 'Admin',
+                'label'             => 'Foo',
+                'show_in_dashboard' => true,
             )
         );
     }
@@ -100,10 +109,10 @@ class AnnotationCompilerPassTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             $meta->tags['sonata.admin'][0],
             array(
-                'manager_type' => 'doctrine_mongodb',
-                'group' => 'myGroup',
-                'label' => 'myLabel',
-                'show_in_dashboard' => false
+                'manager_type'      => 'doctrine_mongodb',
+                'group'             => 'myGroup',
+                'label'             => 'myLabel',
+                'show_in_dashboard' => false,
             )
         );
 
@@ -112,8 +121,8 @@ class AnnotationCompilerPassTest extends \PHPUnit_Framework_TestCase
             array(
                 'setTranslationDomain',
                 array(
-                    'OMG'
-                )
+                    'OMG',
+                ),
             )
         );
     }
