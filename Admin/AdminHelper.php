@@ -11,6 +11,7 @@
 
 namespace Sonata\AdminBundle\Admin;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Inflector\Inflector;
 use Doctrine\Common\Util\ClassUtils;
 use Sonata\AdminBundle\Exception\NoValueException;
@@ -18,6 +19,8 @@ use Sonata\AdminBundle\Util\FormBuilderIterator;
 use Sonata\AdminBundle\Util\FormViewIterator;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormView;
+use Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException;
+use Symfony\Component\PropertyAccess\PropertyAccessor;
 
 /**
  * Class AdminHelper.
@@ -113,41 +116,66 @@ class AdminHelper
         // get the field element
         $childFormBuilder = $this->getChildFormBuilder($formBuilder, $elementId);
 
-        // retrieve the FieldDescription
-        $fieldDescription = $admin->getFormFieldDescription($childFormBuilder->getName());
+        //Child form not found (probably nested one)
+        //if childFormBuilder was not found resulted in fatal error getName() method call on non object
+        if (!$childFormBuilder) {
+            $propertyAccessor = new PropertyAccessor();
+            $entity = $admin->getSubject();
 
-        try {
-            $value = $fieldDescription->getValue($form->getData());
-        } catch (NoValueException $e) {
-            $value = null;
-        }
+            $path = $this->getElementAccessPath($elementId, $entity);
 
-        // retrieve the posted data
-        $data = $admin->getRequest()->get($formBuilder->getName());
+            $collection = $propertyAccessor->getValue($entity, $path);
 
-        if (!isset($data[$childFormBuilder->getName()])) {
-            $data[$childFormBuilder->getName()] = array();
-        }
+            if ($collection instanceof ArrayCollection) {
+                $entityClassName = $this->getEntityClassName($admin, explode('.', preg_replace('#\[\d*?\]#', '', $path)));
+            } elseif ($collection instanceof \Doctrine\ORM\PersistentCollection) {
+                //since doctrine 2.4
+                $entityClassName = $collection->getTypeClass()->getName();
+            } else {
+                throw new \Exception('unknown collection class');
+            }
 
-        $objectCount = count($value);
-        $postCount   = count($data[$childFormBuilder->getName()]);
+            $collection->add(new $entityClassName());
+            $propertyAccessor->setValue($entity, $path, $collection);
 
-        $fields = array_keys($fieldDescription->getAssociationAdmin()->getFormFieldDescriptions());
+            $fieldDescription = null;
+        } else {
+            // retrieve the FieldDescription
+            $fieldDescription = $admin->getFormFieldDescription($childFormBuilder->getName());
 
-        // for now, not sure how to do that
-        $value = array();
-        foreach ($fields as $name) {
-            $value[$name] = '';
-        }
+            try {
+                $value = $fieldDescription->getValue($form->getData());
+            } catch (NoValueException $e) {
+                $value = null;
+            }
 
-        // add new elements to the subject
-        while ($objectCount < $postCount) {
-            // append a new instance into the object
+            // retrieve the posted data
+            $data = $admin->getRequest()->get($formBuilder->getName());
+
+            if (!isset($data[$childFormBuilder->getName()])) {
+                $data[$childFormBuilder->getName()] = array();
+            }
+
+            $objectCount = count($value);
+            $postCount = count($data[$childFormBuilder->getName()]);
+
+            $fields = array_keys($fieldDescription->getAssociationAdmin()->getFormFieldDescriptions());
+
+            // for now, not sure how to do that
+            $value = array();
+            foreach ($fields as $name) {
+                $value[$name] = '';
+            }
+
+            // add new elements to the subject
+            while ($objectCount < $postCount) {
+                // append a new instance into the object
+                $this->addNewInstance($form->getData(), $fieldDescription);
+                ++$objectCount;
+            }
+
             $this->addNewInstance($form->getData(), $fieldDescription);
-            ++$objectCount;
         }
-
-        $this->addNewInstance($form->getData(), $fieldDescription);
 
         $finalForm = $admin->getFormBuilder()->getForm();
         $finalForm->setData($subject);
@@ -169,7 +197,7 @@ class AdminHelper
     public function addNewInstance($object, FieldDescriptionInterface $fieldDescription)
     {
         $instance = $fieldDescription->getAssociationAdmin()->getNewInstance();
-        $mapping  = $fieldDescription->getAssociationMapping();
+        $mapping = $fieldDescription->getAssociationMapping();
 
         $method = sprintf('add%s', $this->camelize($mapping['fieldName']));
 
@@ -200,5 +228,114 @@ class AdminHelper
     public function camelize($property)
     {
         return BaseFieldDescription::camelize($property);
+    }
+
+    /**
+     * Recursively find the class name of the admin responsible for the element at the end of an association chain.
+     *
+     * @param AdminInterface $admin
+     * @param array          $elements
+     *
+     * @return string
+     */
+    protected function getEntityClassName(AdminInterface $admin, $elements)
+    {
+        $element = array_shift($elements);
+        $associationAdmin = $admin->getFormFieldDescription($element)->getAssociationAdmin();
+        if (count($elements) == 0) {
+            return $associationAdmin->getClass();
+        } else {
+            return $this->getEntityClassName($associationAdmin, $elements);
+        }
+    }
+
+    /**
+     * get access path to element which works with PropertyAccessor.
+     *
+     * @param string $elementId expects string in format used in form id field. (uniqueIdentifier_model_sub_model or uniqueIdentifier_model_1_sub_model etc.)
+     * @param mixed  $entity
+     *
+     * @return string
+     *
+     * @throws \Exception
+     */
+    public function getElementAccessPath($elementId, $entity)
+    {
+        $propertyAccessor = new PropertyAccessor();
+
+        $id_without_unique_identifier = implode('_', explode('_', substr($elementId, strpos($elementId, '_') + 1)));
+
+        //array access of id converted to format which PropertyAccessor understands
+        $initial_path = preg_replace('#(_(\d+)_)#', '[$2]', $id_without_unique_identifier);
+
+        $parts = preg_split('#\[\d+\]#', $initial_path);
+
+        $part_return_value = $return_value = '';
+        $current_entity = $entity;
+
+        foreach ($parts as $key => $value) {
+            $sub_parts = explode('_', $value);
+            $id = '';
+            $dot = '';
+
+            foreach ($sub_parts as $sub_value) {
+                $id .= ($id) ? '_'.$sub_value : $sub_value;
+
+                if ($this->pathExists($propertyAccessor, $current_entity, $part_return_value.$dot.$id)) {
+                    $part_return_value .= $dot.$id;
+                    $dot = '.';
+                    $id = '';
+                } else {
+                    $dot = '';
+                }
+            }
+
+            if ($dot !== '.') {
+                throw new \Exception(sprintf('Could not get element id from %s Failing part: %s', $elementId, $sub_value));
+            }
+
+            //check if array access was in this location originally
+            preg_match("#$value\[(\d+)#", $initial_path, $matches);
+
+            if (isset($matches[1])) {
+                $part_return_value .= '['.$matches[1].']';
+            }
+
+            $return_value .= $return_value ? '.'.$part_return_value : $part_return_value;
+            $part_return_value = '';
+
+            if (isset($parts[$key + 1])) {
+                $current_entity = $propertyAccessor->getValue($entity, $return_value);
+            }
+        }
+
+        return $return_value;
+    }
+
+    /**
+     * check if given path exists in $entity.
+     *
+     * @param PropertyAccessor $propertyAccessor
+     * @param mixed            $entity
+     * @param string           $path
+     *
+     * @return bool
+     *
+     * @throws \RuntimeException
+     */
+    private function pathExists(PropertyAccessor $propertyAccessor, $entity, $path)
+    {
+        //sf2 <= 2.3 did not have isReadable method for PropertyAccessor
+        if (method_exists($propertyAccessor, 'isReadable')) {
+            return $propertyAccessor->isReadable($entity, $path);
+        } else {
+            try {
+                $propertyAccessor->getValue($entity, $path);
+
+                return true;
+            } catch (NoSuchPropertyException $e) {
+                return false;
+            }
+        }
     }
 }
