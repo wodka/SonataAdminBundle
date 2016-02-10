@@ -128,7 +128,7 @@ class AdminHelper
 
             if ($collection instanceof ArrayCollection) {
                 $entityClassName = $this->getEntityClassName($admin, explode('.', preg_replace('#\[\d*?\]#', '', $path)));
-            } elseif ($collection instanceof \Doctrine\ORM\PersistentCollection) {
+            } elseif ($collection instanceof \Doctrine\ORM\PersistentCollection || $collection instanceof \Doctrine\ODM\MongoDB\PersistentCollection) {
                 //since doctrine 2.4
                 $entityClassName = $collection->getTypeClass()->getName();
             } else {
