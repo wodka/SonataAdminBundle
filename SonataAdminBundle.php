@@ -15,7 +15,6 @@ use Sonata\AdminBundle\DependencyInjection\Compiler\AddDependencyCallsCompilerPa
 use Sonata\AdminBundle\DependencyInjection\Compiler\AddFilterTypeCompilerPass;
 use Sonata\AdminBundle\DependencyInjection\Compiler\ExtensionCompilerPass;
 use Sonata\AdminBundle\DependencyInjection\Compiler\GlobalVariablesCompilerPass;
-use Sonata\CoreBundle\Form\FormHelper;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
@@ -32,6 +31,7 @@ class SonataAdminBundle extends Bundle
         $container->addCompilerPass(new GlobalVariablesCompilerPass());
 
         $this->registerFormMapping();
+        $this->configureAnnotations();
     }
 
     /**
@@ -40,6 +40,19 @@ class SonataAdminBundle extends Bundle
     public function boot()
     {
         $this->registerFormMapping();
+    }
+
+    /**
+     * setup annotation loading in JMSDiExtraBundle if defined
+     */
+    protected function configureAnnotations()
+    {
+        if (!class_exists('\JMS\DiExtraBundle\JMSDiExtraBundle')) {
+            // cannot set up annotations -> bundle not loaded
+            return;
+        }
+
+        \JMS\DiExtraBundle\JMSDiExtraBundle::addAnnotationPattern('Sonata\AdminBundle\Annotation');
     }
 
     /**
