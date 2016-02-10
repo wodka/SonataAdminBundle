@@ -32,7 +32,7 @@ class SonataAdminBundle extends Bundle
         $container->addCompilerPass(new GlobalVariablesCompilerPass());
 
         $this->registerFormMapping();
-        $this->configureAnnotations();
+        $this->configureAnnotations($container);
     }
 
     /**
@@ -45,15 +45,20 @@ class SonataAdminBundle extends Bundle
 
     /**
      * setup annotation loading in JMSDiExtraBundle if defined
+     *
+     * @param ContainerBuilder $container
      */
-    protected function configureAnnotations()
+    protected function configureAnnotations(ContainerBuilder $container)
     {
-        if (!class_exists('\JMS\DiExtraBundle\JMSDiExtraBundle')) {
-            // cannot set up annotations -> bundle not loaded
-            return;
+        if ($container->getParameterBag()->has('jms_di_extra.annotation_patterns')) {
+            $patterns = $container->getParameter('jms_di_extra.annotation_patterns');
+        } else {
+            $patterns = [];
         }
 
-        \JMS\DiExtraBundle\JMSDiExtraBundle::addAnnotationPattern('Sonata\AdminBundle\Annotation');
+        $patterns[] = 'Sonata\AdminBundle\Annotation';
+
+        $container->setParameter('jms_di_extra.annotation_patterns', $patterns);
     }
 
     /**
