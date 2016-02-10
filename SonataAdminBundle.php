@@ -29,5 +29,20 @@ class SonataAdminBundle extends Bundle
         $container->addCompilerPass(new AddFilterTypeCompilerPass());
         $container->addCompilerPass(new ExtensionCompilerPass());
         $container->addCompilerPass(new GlobalVariablesCompilerPass());
+        
+        $this->configureAnnotations();
+    }
+    
+    /**
+     * setup annotation loading in JMSDiExtraBundle if defined
+     */
+    protected function configureAnnotations()
+    {
+        if (!class_exists('\JMS\DiExtraBundle\JMSDiExtraBundle')) {
+            // cannot set up annotations -> bundle not loaded
+            return;
+        }
+        
+        \JMS\DiExtraBundle\JMSDiExtraBundle::addAnnotationPattern('Sonata\AdminBundle\Annotation');
     }
 }
