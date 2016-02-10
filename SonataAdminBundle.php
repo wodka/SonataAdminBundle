@@ -15,6 +15,7 @@ use Sonata\AdminBundle\DependencyInjection\Compiler\AddDependencyCallsCompilerPa
 use Sonata\AdminBundle\DependencyInjection\Compiler\AddFilterTypeCompilerPass;
 use Sonata\AdminBundle\DependencyInjection\Compiler\ExtensionCompilerPass;
 use Sonata\AdminBundle\DependencyInjection\Compiler\GlobalVariablesCompilerPass;
+use Sonata\CoreBundle\Form\FormHelper;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
